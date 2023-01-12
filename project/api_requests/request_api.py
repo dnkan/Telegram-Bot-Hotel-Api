@@ -35,7 +35,7 @@ def request_search(message: Message) -> Response:
 @exception_request_handler
 def request_property_list(call: CallbackQuery) -> Response:
     """
-    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/list'
+    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/list'
     Предназначена для команд lowprice и highprice. В зависимости от введенной команды сортирует ответ
     по возврастанию цены, или же по убыванию. Возвращает Response, содержащий в себе список отелей в выбранном городе.
 
@@ -44,13 +44,13 @@ def request_property_list(call: CallbackQuery) -> Response:
     """
     logger.info(str(call.from_user.id))
     if user.user.command == constants.HIGHPRICE[1:]:
-        QUERY_PROPERTY_LIST['sortOrder'] = '-PRICE'
-    QUERY_PROPERTY_LIST['destinationId'] = user.user.city_id
-    QUERY_PROPERTY_LIST['checkIn'] = user.user.date_in
-    QUERY_PROPERTY_LIST['checkOut'] = user.user.date_out
+        QUERY_PROPERTY_LIST['sort'] = 'PRICE_LOW_TO_HIGH'
+    QUERY_PROPERTY_LIST['destination'] = user.user.regionId
+    QUERY_PROPERTY_LIST['checkInDate'] = {user.user.date, user.user.month, user.user.year}
+    QUERY_PROPERTY_LIST['checkOutDate'] = {user.user.date, user.user.month, user.user.year}
     QUERY_PROPERTY_LIST['currency'] = user.user.currency
     QUERY_PROPERTY_LIST['locale'] = user.user.locale
-    response = requests.request('GET', URL_PROPERTY_LIST, headers=HEADERS, params=QUERY_PROPERTY_LIST, timeout=15)
+    response = requests.request("POST", URL_PROPERTY_LIST, json=QUERY_PROPERTY_LIST, headers=HEADERS, timeout=15)
     return response
 
 
