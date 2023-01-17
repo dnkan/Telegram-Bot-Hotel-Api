@@ -46,8 +46,8 @@ def request_property_list(call: CallbackQuery) -> Response:
     if user.user.command == constants.HIGHPRICE[1:]:
         QUERY_PROPERTY_LIST['sort'] = 'PRICE_LOW_TO_HIGH'
     QUERY_PROPERTY_LIST['destination'] = user.user.regionId
-    QUERY_PROPERTY_LIST['checkInDate'] = {user.user.date, user.user.month, user.user.year}
-    QUERY_PROPERTY_LIST['checkOutDate'] = {user.user.date, user.user.month, user.user.year}
+    QUERY_PROPERTY_LIST['checkInDate'] = {user.user.day, user.user.month, user.user.year}
+    QUERY_PROPERTY_LIST['checkOutDate'] = {user.user.day, user.user.month, user.user.year}
     QUERY_PROPERTY_LIST['currency'] = user.user.currency
     QUERY_PROPERTY_LIST['locale'] = user.user.locale
     response = requests.request("POST", URL_PROPERTY_LIST, json=QUERY_PROPERTY_LIST, headers=HEADERS, timeout=15)
