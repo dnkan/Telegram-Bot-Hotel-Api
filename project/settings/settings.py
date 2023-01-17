@@ -21,7 +21,7 @@ HEADERS = {
 
 
 URL_SEARCH = 'https://hotels4.p.rapidapi.com/locations/v2/search'
-URL_PROPERTY_LIST = 'https://hotels4.p.rapidapi.com/properties/list'
+URL_PROPERTY_LIST = 'https://hotels4.p.rapidapi.com/properties/v2/list'
 URL_PHOTO = 'https://hotels4.p.rapidapi.com/properties/get-hotel-photos'
 URL_HOTEL = 'https://www.hotels.com/ho{}'
 
@@ -32,13 +32,13 @@ QUERY_SEARCH = {
     'currency': 'USD'
 }
 QUERY_PROPERTY_LIST = {
-    'destinationId': '1506246',
+    'destinationId': '6054439',
     'pageNumber': '1',
     'pageSize': '25',
-    'checkIn': '2020-01-08',
-    'checkOut': '2020-01-15',
+    'checkIn': {10, 10, 2022},
+    'checkOut': {15, 10, 2022},
     'adults1': '1',
-    'sortOrder': 'PRICE',
+    'sort': 'PRICE_LOW_TO_HIGH',
     'locale': 'en_US',
     'currency': 'USD'
 }
