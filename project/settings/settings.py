@@ -1,5 +1,6 @@
 """
-Файл содержащий базовые конфигурации бота и API (Токен, API-ключ, заголовок, параметры и url-адреса)
+Настройки бота, должны храниться в файле .env в корневом каталоге проекта.
+COMMANDS - список собственных команд.
 """
 
 import os
@@ -13,46 +14,22 @@ else:
 TOKEN = os.environ.get('TOKEN')
 API_KEY = os.environ.get('API_KEY')
 
+COMMANDS = (
+    ('start', "Запустить бота"),
+    ('help', "Вывести справку"),
+    ('highprice', 'самые дорогие отели в городе'),
+    ('lowprice', 'недорогие отели в городе'),
+    ('bestdeal', 'отели подходящие по цене и удалению от центра'),
+    ('history', 'история поиска'),
+    ('city', 'выбрать город/даты'),
+)
 
-HEADERS = {
-    'X-RapidAPI-Host': 'hotels4.p.rapidapi.com',
-    'X-RapidAPI-Key': API_KEY
-}
+NUMBER_OF_FOTO = 7  # количество выводимых фото по умолчанию
+DES_TO_FILE = True  # запись запроса уточнения локации в файл
+HOTELS_TO_FILE = False  # запись запроса отелей в файл
+FOTO_TO_FILE = True  # запись запросов фото в файл
+RESPONSE_FROM_FILE = True  # попытка считать ответ из файла, если подходящий есть в базе (только для FOTO и DES)
+
+HISTORY = 5  # Количество запросов выводимых в истории
 
 
-URL_SEARCH = 'https://hotels4.p.rapidapi.com/locations/v2/search'
-URL_PROPERTY_LIST = 'https://hotels4.p.rapidapi.com/properties/v2/list'
-URL_PHOTO = 'https://hotels4.p.rapidapi.com/properties/get-hotel-photos'
-URL_HOTEL = 'https://www.hotels.com/ho{}'
-
-
-QUERY_SEARCH = {
-    'query': 'new_york',
-    'locale': 'en_US',
-    'currency': 'USD'
-}
-QUERY_PROPERTY_LIST = {
-    'destinationId': '6054439',
-    'pageNumber': '1',
-    'pageSize': '25',
-    'checkIn': {10, 10, 2022},
-    'checkOut': {15, 10, 2022},
-    'adults1': '1',
-    'sort': 'PRICE_LOW_TO_HIGH',
-    'locale': 'en_US',
-    'currency': 'USD'
-}
-QUERY_BESTDEAL = {
-    'destinationId': '1506246',
-    'pageNumber': '1',
-    'pageSize': '25',
-    'checkIn': '2020-01-08',
-    'checkOut': '2020-01-15',
-    'adults1': '1',
-    'priceMin': '50',
-    'priceMax': '300',
-    'sortOrder': 'DISTANCE_FROM_LANDMARK',
-    'locale': 'en_US',
-    'currency': 'EUR'
-}
-QUERY_PHOTO = {'id': '1178275040'}

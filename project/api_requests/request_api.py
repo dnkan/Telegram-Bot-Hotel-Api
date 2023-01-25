@@ -1,10 +1,9 @@
 import os
 import requests
 import json
-import re
 import random
 from typing import Union, Optional, Literal, List, Dict, Final, Generator
-from config_data.config import RAPID_API_KEY, DES_TO_FILE, HOTELS_TO_FILE, FOTO_TO_FILE, RESPONSE_FROM_FILE
+from settings.settings import API_KEY, DES_TO_FILE, HOTELS_TO_FILE, FOTO_TO_FILE, RESPONSE_FROM_FILE
 
 
 def request_to_api_hotel(querystring: dict, mode: Literal['des', 'hotel', 'foto'] = 'hotel',

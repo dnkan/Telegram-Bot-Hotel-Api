@@ -11,7 +11,7 @@ from database.models import user, DataBaseModel, Hotel
 from settings import constants
 from settings import settings
 from . import bestdeal
-from api_requests.request_api import request_search, request_property_list, request_get_photo, request_bestdeal
+from api_requests.request_api import get_hotels, get_destination, get_photo, get_hotels, reverse_geocode
 from keyboards import keyboards, keyboards_text, calendar
 from telebot.types import CallbackQuery, InputMediaPhoto, Message
 from .start_help import start_command, check_state_inline_keyboard
@@ -70,7 +70,7 @@ def search_city(message: Message) -> None:
     if message.text in constants.COMMAND_LIST:
         start_command(message)
     else:
-        response = request_search(message)
+        response = get_destination(message)
         if check_status_code(response):
             pattern_city_group = r'(?<="CITY_GROUP",).+?[\]]'
             find_cities = re.findall(pattern_city_group, response.text)
@@ -256,9 +256,9 @@ def load_result(call: CallbackQuery) -> None:
     user.edit('date', datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S'))
     bot.send_message(call.from_user.id, constants.LOAD_RESULT)
     if user.user.command == constants.BESTDEAL[1:]:
-        response_hotels = request_bestdeal(call)
+        response_hotels = reverse_geocode(call)
     else:
-        response_hotels = request_property_list(call)
+        response_hotels = get_hotels(call)
     request_hotels(call, response_hotels)
 
 
@@ -408,7 +408,7 @@ def showing_hotels_with_photo(call: CallbackQuery, hotel: Dict, hotel_show: str,
     :return: None
     """
     logger.info(str(call.from_user.id))
-    response_photo = request_get_photo(call, hotel['id'])
+    response_photo = get_photo(call, hotel['id'])
     if check_status_code(response_photo):
         result_photo = json.loads(response_photo.text)['hotelImages']
         media_massive, photo_str = photo_append(call, result_photo, hotel_show)
