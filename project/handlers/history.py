@@ -2,7 +2,7 @@ import string
 import requests
 
 from typing import Union, List
-from telebot.types import Message, InputMediaPhoto, CallbackQuery
+from telebot.types import Message, InputMediaPhoto, CallbackQuery, User
 from database.models import DataBaseModel, user
 from keyboards.keyboards import keyboard_commands
 from loader import bot, exception_handler

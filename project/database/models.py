@@ -2,7 +2,7 @@ import sqlite3
 
 from dataclasses import dataclass
 from typing import Union, List
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message, CallbackQuery, User
 
 
 @dataclass

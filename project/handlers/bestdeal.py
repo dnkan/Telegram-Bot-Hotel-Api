@@ -2,12 +2,13 @@ import re
 import json
 import settings.settings
 
+
 from typing import List, Dict, Union
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message, CallbackQuery, User
 from database.models import user
 from loader import bot, logger, exception_handler
 from settings import constants
-from api_requests.request_api import reverse_geocode
+from api_requests.request_api import request_bestdeal
 from .lowprice_highprice import count_hotel
 from .start_help import start_command
 
@@ -202,7 +203,6 @@ def bestdeal_logic(call: CallbackQuery, result_hotels: List[Dict], result: List)
         return result
 
 
-
 @exception_handler
 def bestdeal_additional_request(call: CallbackQuery, result) -> None:
     """
@@ -214,6 +214,6 @@ def bestdeal_additional_request(call: CallbackQuery, result) -> None:
     :return: None
     """
     logger.info(str(call.from_user.id))
-    response_hotels = reverse_geocode(call)
+    response_hotels = request_bestdeal(call)
     result_hotels = json.loads(response_hotels.text)['data']['body']['searchResults']['results']
     bestdeal_logic(call, result_hotels, result)

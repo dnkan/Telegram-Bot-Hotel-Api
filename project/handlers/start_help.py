@@ -1,5 +1,5 @@
 from telebot.apihelper import ApiTelegramException
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message, CallbackQuery, User
 from database.models import user
 from loader import bot, logger
 from handlers import lowprice_highprice, history

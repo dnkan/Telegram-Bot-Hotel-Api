@@ -1,6 +1,5 @@
 """
-Настройки бота, должны храниться в файле .env в корневом каталоге проекта.
-COMMANDS - список собственных команд.
+Файл содержащий базовые конфигурации бота и API (Токен, API-ключ, заголовок, параметры и url-адреса)
 """
 
 import os
@@ -14,22 +13,61 @@ else:
 TOKEN = os.environ.get('TOKEN')
 API_KEY = os.environ.get('API_KEY')
 
-COMMANDS = (
-    ('start', "Запустить бота"),
-    ('help', "Вывести справку"),
-    ('highprice', 'самые дорогие отели в городе'),
-    ('lowprice', 'недорогие отели в городе'),
-    ('bestdeal', 'отели подходящие по цене и удалению от центра'),
-    ('history', 'история поиска'),
-    ('city', 'выбрать город/даты'),
-)
 
-NUMBER_OF_FOTO = 7  # количество выводимых фото по умолчанию
-DES_TO_FILE = True  # запись запроса уточнения локации в файл
-HOTELS_TO_FILE = False  # запись запроса отелей в файл
-FOTO_TO_FILE = True  # запись запросов фото в файл
-RESPONSE_FROM_FILE = True  # попытка считать ответ из файла, если подходящий есть в базе (только для FOTO и DES)
-
-HISTORY = 5  # Количество запросов выводимых в истории
+HEADERS = {
+    'X-RapidAPI-Host': 'hotels4.p.rapidapi.com',
+    'X-RapidAPI-Key': API_KEY
+}
 
 
+URL_SEARCH = 'https://hotels4.p.rapidapi.com/locations/v3/search'
+URL_PROPERTY_LIST = 'https://hotels4.p.rapidapi.com/properties/v2/list'
+URL_PHOTO = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
+URL_HOTEL = 'https://www.hotels.com/ho{}'
+
+
+QUERY_SEARCH = {
+    'q': 'new york',
+    'locale': 'en_US',
+    'langid': '1033',
+    'siteid': '300000001'
+}
+
+QUERY_PROPERTY_LIST = {
+    'currency': 'USD',
+	'eapid': 1,
+	'locale': 'en_US',
+	'siteId': 300000001,
+	'destination': {'regionId': '6054439'},
+	'checkInDate': {
+		'day': 10,
+		'month': 10,
+		'year': 2022
+	},
+	'checkOutDate': {
+	    'day': 15,
+		'month': 10,
+		'year': 2022
+	},
+	'rooms': [
+		{
+			'adults': 2,
+			'children': [{'age': 5}, {'age': 7}]
+		}
+	],
+	'resultsStartingIndex': 0,
+	'resultsSize': 200,
+	'sort': 'PRICE_LOW_TO_HIGH',
+	'filters': {'price': {
+			'max': 150,
+			'min': 100
+		}}
+}
+
+QUERY_BESTDEAL = {
+    "currency": "USD",
+	"eapid": 1,
+	"locale": "en_US",
+	"siteId": 300000001,
+	"propertyId": "9209612"
+}

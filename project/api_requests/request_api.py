@@ -1,216 +1,95 @@
-import os
 import requests
-import json
-import random
-from typing import Union, Optional, Literal, List, Dict, Final, Generator
-from settings.settings import API_KEY, DES_TO_FILE, HOTELS_TO_FILE, FOTO_TO_FILE, RESPONSE_FROM_FILE
+import string
+
+from requests import Response
+from telebot.types import Message, CallbackQuery
+from project.loader import logger, exception_request_handler
+from project.settings import constants
+from project.settings.settings import QUERY_SEARCH, URL_SEARCH, HEADERS, QUERY_PROPERTY_LIST, URL_PROPERTY_LIST, QUERY_BESTDEAL
+
+from project.database.models import user
 
 
-def request_to_api_hotel(querystring: dict, mode: Literal['des', 'hotel', 'foto'] = 'hotel',
-                         to_file: bool = False) -> Optional[dict]:
+@exception_request_handler
+def request_search(message: Message) -> Response:
     """
-    Базовая функция запроса к API Hotels
-    :param mode: тип запрашиваемых данных:
-                'des' - подходящие местоположения
-                'hotel' - список отелей, значение по умолчанию
-    :param querystring: строка запроса
-    :param to_file: запись полученного ответа в файл
-    :return: json извлеченный из ответа (dict), если за 3 попытки не удалось получить ответ, то None
+    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/locations/v3/search'
+    Проверяет введённые пользователем символы на ASCII кодировку, если так, то ищет с параметром locale en_US,
+    в противном случае ищет с парметром locale ru_RU. Возвращает Response, содержащий в себе список городов.
+
+    :param message: Message
+    :return: Response
     """
-    if RESPONSE_FROM_FILE and mode != 'hotel':
-        file_name = ''
-        if mode == 'des':
-            file_name = 'DES_' + querystring['query']
-        elif mode == 'foto':
-            file_name = f'FOTO_{querystring["id"]}'
-        file_name = r'materials\\api_request\\' + file_name + '.json'
-        print('Попытка выполнить запрос из файла. Ищем файл:', file_name, end=' ')
-        if os.path.isfile(file_name):
-            with open(file_name, 'r', encoding='utf-8') as file:
-                response = json.load(file)
-            print(' -->>> Файл найден. Запрос выполнен из файла')
-            return response
-        else:
-            print(' -->>> Файл не найден. Запрос выполняется из API')
-
-    endpoint = 'properties/v2/list'
-    if mode == 'des':
-        endpoint = 'locations/v3/search'
-    elif mode == 'foto':
-        endpoint = 'properties/v2/detail'
-
-    url = 'https://hotels4.p.rapidapi.com/' + endpoint
-    headers = {'X-RapidAPI-Host': 'hotels4.p.rapidapi.com', 'X-RapidAPI-Key': RAPID_API_KEY}
-    for i in range(3):
-        try:
-            print(f'Запрос, попытка {i + 1} ::: {querystring} -->>> ', end='')
-            response = requests.get(url, headers=headers, params=querystring, timeout=10)
-            if response.status_code == 200:
-                print('Ответ успешно получен.')
-                break
-        except requests.exceptions.RequestException as message:
-            print('Ошибка request', message)
-    else:
-        return None
-
-    response.encoding = 'utf-8'
-    response = response.json()
-    if to_file:
-        write_response(response)
+    logger.info(str(message.from_user.id))
+    for sym in message.text:
+        if sym not in string.printable:
+            QUERY_SEARCH['locale'] = 'ru_RU'
+            break
+    QUERY_SEARCH['currency'] = user.user.currency
+    QUERY_SEARCH['langid'] = user.user.langid
+    QUERY_SEARCH['siteid'] = user.user.siteid
+    QUERY_SEARCH['q'] = message.text
+    user.edit('locale', QUERY_SEARCH['locale'])
+    response = requests.request('GET', URL_SEARCH, headers=HEADERS, params=QUERY_SEARCH, timeout=15)
     return response
 
 
-def get_destination(location: str) -> Optional[Dict[str, str]]:
+@exception_request_handler
+def request_property_list(call: CallbackQuery) -> Response:
     """
-    Функция получения от API Hotels местоположений, подходящих по названию.
-    :param location: строка для поиска
-    :return: словарь(ключ - наименование локации: значение - id локации)
+    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/list'
+    Предназначена для команд lowprice и highprice. В зависимости от введенной команды сортирует ответ
+    по возврастанию цены, или же по убыванию. Возвращает Response, содержащий в себе список отелей в выбранном городе.
+
+    :param call: CallbackQuery
+    :return: Response
     """
-    querystring = {"q": location, "locale": "ru_RU"}
-    response = request_to_api_hotel(querystring, 'des', DES_TO_FILE)
-    if not response:
-        return None
-    result = {}
-    for elem in response['sr']:
-        result = elem['gaiaId']
-    return result
-
-
-def get_hotels(data: dict, **params) -> List[dict]:
-    """
-    Получает текущее состояние пользователя, формируется базовая строка запроса для получения списка отелей,
-    объединяется с params, запрашиваются отели. Формируется список с данными по отелям. Данные запрашиваются
-    при необходимости несколько раз, чтобы получить нужное количество отелей.
-    :param data: текущие данные пользователя.
-    :param params: данные для объединения со строкой запроса для необходимой сортировки или фильтрации
-                    по умолчанию сортировка по возрастанию цены.
-    :return: список, элемент списка - словарь с данными об отеле
-    """
-
-    def get_address(address: dict) -> str:
-        if not address:
-            return 'Не определен'
-        res = ', '.join([address.get('locality', ''),
-                         address.get('streetAddress', ''),
-                         address.get('extendedAddress', '')])
-        return res
-
-    def get_price(price: dict):
-        try:
-            cost = price['price']['exactCurrent']
-        except (TypeError, KeyError):
-            return 'Стоимость: нет данных.'
-        return f'За сутки {cost}$. Всего {cost * stay_day:.2f}$ за {stay_day} {end}'
-
-    def parse(hotel: dict) -> dict:
-        item = {
-            'id': hotel['id'],
-            'url': f'https://www.hotels.com/ho{hotel["id"]}',
-            'name': f"{'★' * int(hotel.get('starRating', 0))} {hotel.get('name', '-')}",
-            'address': get_address(hotel.get('address')),
-            'price': get_price(hotel.get('ratePlan')),
-            'latitude': hotel['coordinate']['lat'],
-            'longitude': hotel['coordinate']['lon'],
-        }
-        return item
-
-
-    stay_day: Final[int] = (data['check_out'] - data['check_in']).days
-    if stay_day == 1:
-        end = 'ночь'
-    elif stay_day < 5:
-        end = 'ночи'
-    else:
-        end = 'ночей'
-
-    form = '%Y-%m-%d'
-    querystring = {
-        "destination": data['regionId'],
-        "pageNumber": 1,
-        "pageSize": "25",
-        "checkInDate": {'day', 'month', 'year'},
-        "checkOutDate": {'day', 'month', 'year'},
-        "adults1": "2",
-        "sort": "PRICE_LOW_TO_HIGH",
-        "locale": "ru_RU",
-        "currency": "USD",
+    logger.info(str(call.from_user.id))
+    if user.user.command == constants.HIGHPRICE[1:]:
+        QUERY_PROPERTY_LIST['sort'] = '-PRICE_LOW_TO_HIGH'
+    QUERY_PROPERTY_LIST['regionId'] = user.user.city_id
+    QUERY_PROPERTY_LIST['eapid'] = user.user.eapid
+    QUERY_PROPERTY_LIST['checkInDate'] = {
+		user.user.day,
+		user.user.month,
+		user.user.year
+	}
+    QUERY_PROPERTY_LIST['checkOutDate'] = {
+		user.user.day,
+		user.user.month,
+		user.user.year
+	}
+    QUERY_PROPERTY_LIST['rooms'] = {
+        user.user.adults,
+        user.user.children
     }
-    querystring.update(params)
-    result = []
-    page_number = 1
-    while len(result) < data['number_hotels']:
-        response = request_to_api_hotel(querystring, to_file=HOTELS_TO_FILE)
-        if not response:
-            break
-        response = response['data']['body']['searchResults']['results']  # оставляем список отелей
-        print(response)
-        result.extend([parse(hotel) for hotel in response])
-        page_number += 1
-        querystring.update({"pageNumber": page_number})
-
-    return result[:data['number_hotels']]
+    QUERY_PROPERTY_LIST['currency'] = user.user.currency
+    QUERY_PROPERTY_LIST['locale'] = user.user.locale
+    QUERY_PROPERTY_LIST['filters'] = {
+        user.user.max,
+        user.user.min
+    }
+    response = requests.request('POST', URL_PROPERTY_LIST, headers=HEADERS, params=QUERY_PROPERTY_LIST, timeout=15)
+    return response
 
 
-def get_photo(id_hotel: int) -> Generator:
+@exception_request_handler
+def request_bestdeal(call: CallbackQuery) -> Response:
     """
-    Функция-генератор, получает от API  данные по фото
-    :param id_hotel: ID отеля
-    :return: ссылки на фото отелей
+    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/detail'. Предназначена для
+    команды bestdeal. Исключительность данной функции под функционал одной команды заключается в широкой
+    установке параметров для поиска. Возвращает Response, содержащий в себе список отелей в выбранном городе.
+
+    :param call: CallbackQuery
+    :return: Response
     """
-    querystring = {"id": id_hotel}
-    response = request_to_api_hotel(querystring, 'foto', to_file=FOTO_TO_FILE)
-    response = response['hotelImages']
-    while True:
-        random.shuffle(response)
-        for elem in response:
-            url = elem['baseUrl'].replace('{size}', 'y')
-            yield url
+    logger.info(str(call.from_user.id))
+    QUERY_BESTDEAL['siteId'] = user.user.city_id
+    QUERY_BESTDEAL['eapid'] = user.user.eapid
+    QUERY_BESTDEAL['propertyId'] = user.user.propertyId
+    QUERY_BESTDEAL['currency'] = user.user.currency
+    QUERY_BESTDEAL['locale'] = user.user.locale
+    response = requests.request('POST', URL_PROPERTY_LIST, headers=HEADERS, params=QUERY_BESTDEAL, timeout=15)
+    return response
 
 
-def write_response(resp: dict) -> None:
-    """
-    Функция записи результата запроса в файл
-    :param resp: json объект полученный из запроса
-    :return: None
-    """
-    while 'materials' not in os.listdir():
-        os.chdir('..')
-    file_name = os.path.join('materials', 'api_request')
-    try:
-        file_name = os.path.join(file_name, 'HOTEL_' + resp['data']['body']['header'])
-    except KeyError:
-        if resp.get('term'):
-            file_name = os.path.join(file_name, 'DES_' + str(resp.get('term')))
-        else:
-            file_name = os.path.join(file_name, 'FOTO_' + str(resp.get('hotelId', 'no')))
-    file_name += '.json'
-    print(file_name)
-    print(os.path.abspath(file_name))
-    with open(file_name, 'w', encoding='utf-8') as file:
-        json.dump(resp, file, indent=4, ensure_ascii=False)
-
-
-def reverse_geocode(latitude: Union[str, float], longitude: Union[str, float]) -> Optional[str]:
-    """
-    Определение адреса (города) по координатам.
-    :param latitude: широта
-    :param longitude: долгота
-    :return: наименование города по этим координатам. None - если не удалось определить город.
-    """
-
-    url = "https://forward-reverse-geocoding.p.rapidapi.com/v1/reverse/"
-    querystring = {"lat": str(latitude), "lon": str(longitude), "accept-language": "en", "polygon_threshold": "0.0"}
-    headers = {"X-RapidAPI-Host": "forward-reverse-geocoding.p.rapidapi.com", "X-RapidAPI-Key": RAPID_API_KEY}
-
-    city = None
-    try:
-        response = requests.get(url, headers=headers, params=querystring)
-    except requests.exceptions:
-        return None
-
-    if response.status_code == 200:
-        response = response.json()
-        if response.get('error') is None:
-            city = response.get('address').get('city')
-
-    return city
