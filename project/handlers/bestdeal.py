@@ -143,7 +143,7 @@ def check_num(message: str) -> str:
     int_pattern = r'\b[0-9]+\b'
     if [message] == re.findall(float_pattern, message) or [message] == re.findall(int_pattern, message):
         if ',' in message:
-            dist = re.sub(r'[,]', '.', message)
+            dist = re.sub(r'[,]', '', message)
         else:
             dist = message
         return dist

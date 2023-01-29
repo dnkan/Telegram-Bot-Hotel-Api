@@ -11,9 +11,9 @@ from database.models import user, DataBaseModel, Hotel
 from settings import constants
 from settings import settings
 from . import bestdeal
-from api_requests.request_api import request_search, request_property_list, request_bestdeal
+from api_requests.request_api import request_search, request_property_list, request_bestdeal, request_get_photo
 from keyboards import keyboards, keyboards_text, calendar
-from telebot.types import CallbackQuery, InputMediaPhoto, Message, User
+from telebot.types import CallbackQuery, InputMediaPhoto, Message
 from .start_help import start_command, check_state_inline_keyboard
 
 
@@ -72,12 +72,12 @@ def search_city(message: Message) -> None:
     else:
         response = request_search(message)
         if check_status_code(response):
-            pattern_city_group = r'(?<="CITY_GROUP",).+?[\]]'
+            pattern_city_group = r'(?<="gaiaRegionResult",).+?[\]]'
             find_cities = re.findall(pattern_city_group, response.text)
             if len(find_cities[0]) > 20:
-                pattern_dest = r'(?<="destinationId":")\d+'
+                pattern_dest = r'(?<="gaiaId":")\d+'
                 destination = re.findall(pattern_dest, find_cities[0])
-                pattern_city = r'(?<="name":")\w+[\s, \w]\w+'
+                pattern_city = r'(?<="shortName":")\w+[\s, \w]\w+'
                 city = re.findall(pattern_city, find_cities[0])
                 city_list = list(zip(destination, city))
                 bot_message = bot.send_message(

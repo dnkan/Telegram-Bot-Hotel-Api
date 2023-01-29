@@ -14,7 +14,6 @@ class User:
     user_id: int = 0
     command: str = ''
     currency: str = ''
-    locale: str = ''
     city: str = ''
     city_id: str = ''
     count_hotel: int = 0
