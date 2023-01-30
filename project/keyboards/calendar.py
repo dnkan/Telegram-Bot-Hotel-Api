@@ -1,11 +1,11 @@
 from telebot.types import CallbackQuery
-from project.database.models import user
-from project.loader import bot, logger, exception_handler
+from database.models import user
+from loader import bot, logger, exception_handler
 from telegram_bot_calendar import DetailedTelegramCalendar
 from keyboards.keyboards_text import LSTEP
-from project.settings import constants
+from settings import constants
 from datetime import date, timedelta, datetime
-from project.handlers import lowprice_highprice
+from handlers import lowprice_highprice
 
 
 class CustomCalendar(DetailedTelegramCalendar):

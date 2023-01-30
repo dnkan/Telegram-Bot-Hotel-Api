@@ -3,12 +3,12 @@ import string
 
 from requests import Response
 from telebot.types import Message, CallbackQuery
-from project.loader import logger, exception_request_handler
-from project.settings import constants
-from project.settings.settings import QUERY_SEARCH, URL_SEARCH, HEADERS, QUERY_PROPERTY_LIST, URL_PROPERTY_LIST, \
-    QUERY_BESTDEAL
+from loader import logger, exception_request_handler
+from settings import constants
+from settings.settings import QUERY_SEARCH, URL_SEARCH, HEADERS, QUERY_PROPERTY_LIST, URL_PROPERTY_LIST, \
+    QUERY_BESTDEAL, URL_PHOTO
 
-from project.database.models import user
+from database.models import user
 
 
 @exception_request_handler
@@ -73,7 +73,26 @@ def request_bestdeal(call: CallbackQuery) -> Response:
     QUERY_BESTDEAL['locale'] = user.user.locale
     QUERY_BESTDEAL['siteId'] = user.user.siteId
     QUERY_BESTDEAL['propertyId'] = user.user.propertyId
-    response = requests.get(URL_PROPERTY_LIST, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
+    response = requests.get(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
     return response
 
 
+@exception_request_handler
+def request_get_photo(call: CallbackQuery) -> Response:
+    """
+    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/detail'.
+    Вызывается при необходимости вывода фотографий к отелям. Возвращает Response, содержащий в себе список url
+    фотографий отелей.
+
+    :param call: CallbackQuery
+    :param hotel_id: int
+    :return: Response
+    """
+    logger.info(str(call.from_user.id))
+    QUERY_BESTDEAL['currency'] = user.user.currency
+    #QUERY_BESTDEAL['eapid'] = user.user.eapid
+    QUERY_BESTDEAL['locale'] = user.user.locale
+    #QUERY_BESTDEAL['siteId'] = user.user.siteId
+    #QUERY_BESTDEAL['propertyId'] = user.user.propertyId
+    response = requests.get(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
+    return response

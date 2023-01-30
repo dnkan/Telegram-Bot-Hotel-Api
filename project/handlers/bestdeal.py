@@ -1,14 +1,14 @@
 import re
 import json
-import project.settings.settings
+import settings.settings
 
 
 from typing import List, Dict, Union
 from telebot.types import Message, CallbackQuery
-from project.database.models import user
-from project.loader import bot, logger, exception_handler
-from project.settings import constants
-from project.api_requests.request_api import request_bestdeal
+from database.models import user
+from loader import bot, logger, exception_handler
+from settings import constants
+from api_requests.request_api import request_bestdeal
 from .lowprice_highprice import count_hotel
 from .start_help import start_command
 

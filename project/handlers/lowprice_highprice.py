@@ -5,13 +5,13 @@ import requests
 from typing import Union, Any, Dict, Optional, List, Tuple
 from requests.models import Response
 from datetime import datetime
-from project.keyboards.keyboards import keyboard_commands
-from project.loader import bot, logger, exception_handler
-from project.database.models import user, DataBaseModel, Hotel
-from project.settings import constants, settings
+from keyboards.keyboards import keyboard_commands
+from loader import bot, logger, exception_handler
+from database.models import user, DataBaseModel, Hotel
+from settings import constants, settings
 from . import bestdeal
-from project.api_requests.request_api import request_search, request_property_list, request_bestdeal
-from project.keyboards import keyboards, keyboards_text, calendar
+from api_requests.request_api import request_search, request_property_list, request_bestdeal, request_get_photo
+from keyboards import keyboards, keyboards_text, calendar
 from telebot.types import CallbackQuery, InputMediaPhoto, Message
 from .start_help import start_command, check_state_inline_keyboard
 
@@ -408,13 +408,14 @@ def showing_hotels_with_photo(call: CallbackQuery, hotel: Dict, hotel_show: str,
     :return: None
     """
     logger.info(str(call.from_user.id))
-    response_photo = request_get_photo(call, hotel['id'])
+    response_photo = request_get_photo(call)
     if check_status_code(response_photo):
-        result_photo = json.loads(response_photo.text)['propertyImage']['image']['url']
+        result_photo = json.loads(response_photo.text)['data']['propertyInfo']['propertyGallery']['images']
         media_massive, photo_str = photo_append(call, result_photo, hotel_show)
         bot.send_media_group(call.from_user.id, media=media_massive)
         user_hotel.photo = photo_str
         DataBaseModel.insert_hotel(user_hotel)
+
 
 
 @exception_handler

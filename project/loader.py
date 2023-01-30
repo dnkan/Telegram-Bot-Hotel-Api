@@ -6,10 +6,10 @@ from typing import Callable
 
 from requests import ReadTimeout
 from telebot import TeleBot
-from project.database.models import user
-from project.logging_config import custom_logger
-from project.settings import constants
-from project.settings.settings import TOKEN
+from database.models import user
+from logging_config import custom_logger
+from settings import constants
+from settings.settings import TOKEN
 
 logger = custom_logger('bot_logger')
 bot = TeleBot(token=TOKEN)
