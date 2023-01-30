@@ -5,14 +5,13 @@ import requests
 from typing import Union, Any, Dict, Optional, List, Tuple
 from requests.models import Response
 from datetime import datetime
-from keyboards.keyboards import keyboard_commands
-from loader import bot, logger, exception_handler
-from database.models import user, DataBaseModel, Hotel
-from settings import constants
-from settings import settings
+from project.keyboards.keyboards import keyboard_commands
+from project.loader import bot, logger, exception_handler
+from project.database.models import user, DataBaseModel, Hotel
+from project.settings import constants, settings
 from . import bestdeal
-from api_requests.request_api import request_search, request_property_list, request_bestdeal, request_get_photo
-from keyboards import keyboards, keyboards_text, calendar
+from project.api_requests.request_api import request_search, request_property_list, request_bestdeal
+from project.keyboards import keyboards, keyboards_text, calendar
 from telebot.types import CallbackQuery, InputMediaPhoto, Message
 from .start_help import start_command, check_state_inline_keyboard
 
@@ -23,7 +22,7 @@ def record_command(message: Union[Message, CallbackQuery]) -> None:
     Функция, запускающая команды: 'lowprice', 'highprice', 'bestdeal'. Проверяет входящий тип
     данных из предыдущей функции. С данной функции осуществляется начало сбора информации
     по команде, для дальнейшего сохранения в базу данных. Так же функция оповещает пользователя,
-    что поиск Российских городов временно приостановлен.
+    что поиск Российских городов приостановлен.
 
     :param message: Union[Message, CallbackQuery]
     :return: None
@@ -278,7 +277,7 @@ def request_hotels(call: CallbackQuery, response_hotels: Response) -> None:
     logger.info(str(call.from_user.id))
     if check_status_code(response_hotels):
         DataBaseModel.insert_user(user.get_tuple())
-        result_hotels = json.loads(response_hotels.text)['data']['body']['searchResults']['results']
+        result_hotels = json.loads(response_hotels.text)['data']['propertySearch']['properties']
         if user.user.command == constants.BESTDEAL[1:]:
             result_hotels = bestdeal.bestdeal_logic(call, result_hotels, result=[])
             if result_hotels is False:
@@ -327,6 +326,7 @@ def showing_hotels(call: CallbackQuery, result_hotels: Any) -> None:
                 call=call, currency=user.user.currency, days=user.user.day_period, hotel=hotel
             )
             if hotel_show is not None:
+                print('Был здесь!')
                 index += 1
                 user_hotel = Hotel(call.from_user.id, hotel_show)
                 if user.user.count_photo != 0:
@@ -352,22 +352,22 @@ def hotel_template(call: CallbackQuery, currency: str, days: int, hotel: Dict) -
         hotel_show = locale_choice(call)
         link = settings.URL_HOTEL.format(hotel['id'])
         if currency == 'USD':
-            price = int(hotel['ratePlan']['price']['current'][1:])
+            price = int(hotel['price']['lead']['formatted'][1:])
             cur_sym = '$'
             price_per_period = price * days
         elif currency == 'EUR':
-            price = int(hotel['ratePlan']['price']['current'][:-2])
+            price = int(hotel['price']['lead']['formatted'][:-2])
             cur_sym = '€'
             price_per_period = price * days
         else:
-            price = hotel['ratePlan']['price']['current'][:-4]
+            price = hotel['price']['lead']['formatted'][:-4]
             price_ru = re.sub(r'[,]', '', price)
             price_per_period = int(price_ru) * days
             cur_sym = 'RUB'
         name = hotel['name']
-        address = hotel['address']['streetAddress']
-        distance = hotel['landmarks'][0]['distance']
-        star_rating = hotel['starRating']
+        address = ''  # hotel['address']['streetAddress']
+        distance = hotel['destinationInfo']['distanceFromDestination']['value']
+        star_rating = hotel['reviews']['score']
         return hotel_show.format(
             name, address, distance, price,
             cur_sym, price_per_period,
@@ -410,7 +410,7 @@ def showing_hotels_with_photo(call: CallbackQuery, hotel: Dict, hotel_show: str,
     logger.info(str(call.from_user.id))
     response_photo = request_get_photo(call, hotel['id'])
     if check_status_code(response_photo):
-        result_photo = json.loads(response_photo.text)['hotelImages']
+        result_photo = json.loads(response_photo.text)['propertyImage']['image']['url']
         media_massive, photo_str = photo_append(call, result_photo, hotel_show)
         bot.send_media_group(call.from_user.id, media=media_massive)
         user_hotel.photo = photo_str

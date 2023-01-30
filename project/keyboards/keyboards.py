@@ -1,7 +1,7 @@
 from typing import List
 from telebot.types import InlineKeyboardMarkup
-from keyboards import keyboards_text
-from settings import constants
+from project.keyboards import keyboards_text
+from project.settings import constants
 from telebot import types
 
 

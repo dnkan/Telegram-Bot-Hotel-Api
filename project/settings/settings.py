@@ -5,6 +5,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 
+
 if not find_dotenv():
     exit('Файл .env отсутствует')
 else:

@@ -1,14 +1,14 @@
 import re
 import json
-import settings.settings
+import project.settings.settings
 
 
 from typing import List, Dict, Union
-from telebot.types import Message, CallbackQuery, User
-from database.models import user
-from loader import bot, logger, exception_handler
-from settings import constants
-from api_requests.request_api import request_bestdeal
+from telebot.types import Message, CallbackQuery
+from project.database.models import user
+from project.loader import bot, logger, exception_handler
+from project.settings import constants
+from project.api_requests.request_api import request_bestdeal
 from .lowprice_highprice import count_hotel
 from .start_help import start_command
 
@@ -153,7 +153,7 @@ def check_distance(message) -> None:
     """
     Функция - Проверяющая на корректность введённой информации пользователем о минимальном и максимальном расстоянии.
     (Чтобы минимальное расстояние, не было больше максимального) Если ответ корректный, возвращает в файл
-    lowprice_highprice, функцию count_hotel  для дальнейшего прохождения сценария. Eсли ответ не корректный,
+    lowprice_highprice, функцию count_hotel для дальнейшего прохождения сценария. Eсли ответ не корректный,
     повторяется запрос о максимальном расстоянии.
 
     :param message: Message
@@ -189,7 +189,7 @@ def bestdeal_logic(call: CallbackQuery, result_hotels: List[Dict], result: List)
     """
     logger.info(str(call.from_user.id))
     for hotel in result_hotels:
-        distance = re.sub(r'[\D+]', '', hotel['landmarks'][0]['distance'])
+        distance = re.sub(r'[\D+]', '', hotel['destinationInfo']['distanceFromDestination']['value'])
         if user.user.min_distance <= int(distance) <= user.user.max_distance:
             result.append(hotel)
     if len(result) < user.user.count_hotel + 5:

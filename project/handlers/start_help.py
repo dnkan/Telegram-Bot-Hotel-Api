@@ -1,5 +1,5 @@
 from telebot.apihelper import ApiTelegramException
-from telebot.types import Message, CallbackQuery, User
+from telebot.types import Message, CallbackQuery
 from database.models import user
 from loader import bot, logger
 from handlers import lowprice_highprice, history
@@ -108,7 +108,7 @@ def echo_handler(message: Message) -> None:
 def check_state_inline_keyboard(message: Message) -> None:
     """
     Функция -  предназначена для удаления inline-кнопок, в случае не активного статуса
-    (пользователь перешёл в другую команду). Чтобы исключить повторное нажатие на кнопку вне сценария,
+    (пользователь перешёл в другую команду). Чтобы убрать повторное нажатие на кнопку вне сценария,
     данная функция удаляет оставшиеся inline-кнопки, если кнопки нет, то возникает исключение
     ApiTelegramException, которое функция подавляет.
 
