@@ -410,7 +410,7 @@ def showing_hotels_with_photo(call: CallbackQuery, hotel: Dict, hotel_show: str,
     logger.info(str(call.from_user.id))
     response_photo = request_get_photo(call)
     if check_status_code(response_photo):
-        result_photo = json.loads(response_photo.text)['data']['propertyInfo']['propertyGallery']['images']
+        result_photo = json.loads(response_photo.text)
         media_massive, photo_str = photo_append(call, result_photo, hotel_show)
         bot.send_media_group(call.from_user.id, media=media_massive)
         user_hotel.photo = photo_str

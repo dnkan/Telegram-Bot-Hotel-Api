@@ -73,7 +73,7 @@ def request_bestdeal(call: CallbackQuery) -> Response:
     QUERY_BESTDEAL['locale'] = user.user.locale
     QUERY_BESTDEAL['siteId'] = user.user.siteId
     QUERY_BESTDEAL['propertyId'] = user.user.propertyId
-    response = requests.get(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
+    response = requests.post(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
     return response
 
 
@@ -90,9 +90,6 @@ def request_get_photo(call: CallbackQuery) -> Response:
     """
     logger.info(str(call.from_user.id))
     QUERY_BESTDEAL['currency'] = user.user.currency
-    #QUERY_BESTDEAL['eapid'] = user.user.eapid
     QUERY_BESTDEAL['locale'] = user.user.locale
-    #QUERY_BESTDEAL['siteId'] = user.user.siteId
-    #QUERY_BESTDEAL['propertyId'] = user.user.propertyId
-    response = requests.get(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
+    response = requests.post(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
     return response
