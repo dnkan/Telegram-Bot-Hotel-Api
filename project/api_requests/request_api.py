@@ -6,8 +6,7 @@ from telebot.types import Message, CallbackQuery
 from loader import logger, exception_request_handler
 from settings import constants
 from settings.settings import QUERY_SEARCH, URL_SEARCH, HEADERS, QUERY_PROPERTY_LIST, URL_PROPERTY_LIST, \
-    QUERY_BESTDEAL, URL_PHOTO
-
+    QUERY_PHOTO, URL_PHOTO
 from database.models import user
 
 
@@ -45,7 +44,6 @@ def request_property_list(call: CallbackQuery) -> Response:
     if user.user.command == constants.HIGHPRICE[1:]:
         QUERY_PROPERTY_LIST['sort'] = '-PRICE_LOW_TO_HIGH'
     QUERY_PROPERTY_LIST['currency'] = user.user.currency
-    # QUERY_PROPERTY_LIST['locale'] = user.user.locale
     QUERY_PROPERTY_LIST['destination'] = {'regionId': user.user.city_id}
     QUERY_PROPERTY_LIST['checkInDate'] = {'day': int(user.user.date_in.split('-')[2]),
                                           'month': int(user.user.date_in.split('-')[1]),
@@ -58,7 +56,34 @@ def request_property_list(call: CallbackQuery) -> Response:
 
 
 @exception_request_handler
-def request_bestdeal(call: CallbackQuery) -> Response:
+def request_bestdeal_list(call: CallbackQuery) -> Response:
+    """
+    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/list'
+    Предназначена для команд lowprice и highprice. В зависимости от введенной команды сортирует ответ
+    по возврастанию цены, или же по убыванию. Возвращает Response, содержащий в себе список отелей в выбранном городе.
+
+    :param call: CallbackQuery
+    :return: Response
+    """
+    logger.info(str(call.from_user.id))
+    if user.user.command == constants.HIGHPRICE[1:]:
+        QUERY_PROPERTY_LIST['sort'] = '-PRICE_LOW_TO_HIGH'
+    QUERY_PROPERTY_LIST['currency'] = user.user.currency
+    QUERY_PROPERTY_LIST['destination'] = {'regionId': user.user.city_id}
+    QUERY_PROPERTY_LIST['checkInDate'] = {'day': int(user.user.date_in.split('-')[2]),
+                                          'month': int(user.user.date_in.split('-')[1]),
+                                          'year': int(user.user.date_in.split('-')[0])}
+    QUERY_PROPERTY_LIST['checkOutDate'] = {'day': int(user.user.date_out.split('-')[2]),
+                                           'month': int(user.user.date_out.split('-')[1]),
+                                           'year': int(user.user.date_out.split('-')[0])}
+    QUERY_PROPERTY_LIST['filters']['price'] = {'max': user.user.price_max,
+                                               'min': user.user.price_min}
+    response = requests.post(URL_PROPERTY_LIST, json=QUERY_PROPERTY_LIST, headers=HEADERS, timeout=15)
+    return response
+
+
+@exception_request_handler
+def request_photo(call: CallbackQuery, id_hotel) -> Response:
     """
     Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/detail'. Предназначена для
     команды bestdeal. Исключительность данной функции под функционал одной команды заключается в широкой
@@ -68,28 +93,6 @@ def request_bestdeal(call: CallbackQuery) -> Response:
     :return: Response
     """
     logger.info(str(call.from_user.id))
-    QUERY_BESTDEAL['currency'] = user.user.currency
-    QUERY_BESTDEAL['eapid'] = user.user.eapid
-    QUERY_BESTDEAL['locale'] = user.user.locale
-    QUERY_BESTDEAL['siteId'] = user.user.siteId
-    QUERY_BESTDEAL['propertyId'] = user.user.propertyId
-    response = requests.post(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
-    return response
-
-
-@exception_request_handler
-def request_get_photo(call: CallbackQuery) -> Response:
-    """
-    Функция - делающая запрос на API по адресу: 'https://hotels4.p.rapidapi.com/properties/v2/detail'.
-    Вызывается при необходимости вывода фотографий к отелям. Возвращает Response, содержащий в себе список url
-    фотографий отелей.
-
-    :param call: CallbackQuery
-    :param hotel_id: int
-    :return: Response
-    """
-    logger.info(str(call.from_user.id))
-    QUERY_BESTDEAL['currency'] = user.user.currency
-    QUERY_BESTDEAL['locale'] = user.user.locale
-    response = requests.post(URL_PHOTO, headers=HEADERS, json=QUERY_BESTDEAL, timeout=15)
+    QUERY_PHOTO['propertyId'] = id_hotel
+    response = requests.post(URL_PHOTO, json=QUERY_PHOTO, headers=HEADERS, timeout=15)
     return response

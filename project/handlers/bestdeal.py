@@ -2,13 +2,12 @@ import re
 import json
 import settings.settings
 
-
 from typing import List, Dict, Union
 from telebot.types import Message, CallbackQuery
 from database.models import user
 from loader import bot, logger, exception_handler
 from settings import constants
-from api_requests.request_api import request_bestdeal
+from api_requests.request_api import request_bestdeal_list
 from .lowprice_highprice import count_hotel
 from .start_help import start_command
 
@@ -143,7 +142,7 @@ def check_num(message: str) -> str:
     int_pattern = r'\b[0-9]+\b'
     if [message] == re.findall(float_pattern, message) or [message] == re.findall(int_pattern, message):
         if ',' in message:
-            dist = re.sub(r'[,]', '', message)
+            dist = re.sub(r'[, ]', '', message)
         else:
             dist = message
         return dist
@@ -189,18 +188,10 @@ def bestdeal_logic(call: CallbackQuery, result_hotels: List[Dict], result: List)
     """
     logger.info(str(call.from_user.id))
     for hotel in result_hotels:
-        distance = re.sub(r'[\D+]', '', hotel['destinationInfo']['distanceFromDestination']['value'])
+        distance = re.sub(r'[\D+]', '', str(hotel['destinationInfo']['distanceFromDestination']['value']))
         if user.user.min_distance <= int(distance) <= user.user.max_distance:
             result.append(hotel)
-    if len(result) < user.user.count_hotel + 5:
-        settings.settings.QUERY_BESTDEAL['pageNumber'] = int(settings.settings.QUERY_BESTDEAL['pageNumber']) + 1
-        if settings.settings.QUERY_BESTDEAL['pageNumber'] == 4:
-            return False
-        else:
-            bestdeal_additional_request(call, result)
-    elif len(result) >= user.user.count_hotel + 5:
-        settings.settings.QUERY_BESTDEAL['pageNumber'] = 1
-        return result
+    return result
 
 
 @exception_handler
@@ -214,6 +205,6 @@ def bestdeal_additional_request(call: CallbackQuery, result) -> None:
     :return: None
     """
     logger.info(str(call.from_user.id))
-    response_hotels = request_bestdeal(call)
-    result_hotels = json.loads(response_hotels.text)['data']['body']['searchResults']['results']
+    response_hotels = request_bestdeal_list(call)
+    result_hotels = json.loads(response_hotels.text)['data']['propertySearch']['properties']
     bestdeal_logic(call, result_hotels, result)

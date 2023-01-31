@@ -62,14 +62,6 @@ QUERY_PROPERTY_LIST = {
     }}
 }
 
-QUERY_BESTDEAL = {
-    "currency": "USD",
-    "eapid": 1,
-    "locale": "en_US",
-    "siteId": 300000001,
-    "propertyId": "9209612"
-}
-
 QUERY_PHOTO = {
     "currency": "USD",
     "eapid": 1,

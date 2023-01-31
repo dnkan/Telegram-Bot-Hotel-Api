@@ -2,7 +2,7 @@ import string
 import requests
 
 from typing import Union, List
-from telebot.types import Message, InputMediaPhoto, CallbackQuery, User
+from telebot.types import Message, InputMediaPhoto, CallbackQuery
 from database.models import DataBaseModel, user
 from keyboards.keyboards import keyboard_commands
 from loader import bot, exception_handler
@@ -34,7 +34,7 @@ def history_menu(message: Union[Message, CallbackQuery]) -> None:
 def callback_history_menu(call: CallbackQuery) -> None:
     """
     Функция - обработчик  inline-кнопок. Реагирует только на элменты списка HISTORY_LIST.
-    В случае выбора пользователем - Просмотреть, выводит клавиатуру с подменю выбора режима просмотра истории.
+    В случае выбора пользователем - Просмотреть, выводит клавиатуру под меню выбора режима просмотра истории.
     В случае выбора пользователем - Очистить, очищает историю пользователя и выводит сообщении
     об успешной очистке и дальнейших действиях.
 
@@ -101,7 +101,7 @@ def history_showing(call: CallbackQuery, user_command: List[tuple]) -> None:
     Функция - обрабатывает ответ с БД и циклом выводит пользователю шаблон с данными о команде.
     Сам шаблон в зависимости от языка запроса получаем из функции locale_history.
     На каждой итерации делает запрос к БД, для получения истории найденных отелей. Если отели найдены,
-    то направляется в функцию history_hotels_show. В противном случае, сообщает пользователю,
+    то направляется в функцию history_hotels_show. В противном случае сообщает пользователю,
     что по данной команде не были найдены отели.
 
     :param call: CallbackQuery

@@ -10,7 +10,7 @@ from loader import bot, logger, exception_handler
 from database.models import user, DataBaseModel, Hotel
 from settings import constants, settings
 from . import bestdeal
-from api_requests.request_api import request_search, request_property_list, request_bestdeal, request_get_photo
+from api_requests.request_api import request_search, request_property_list, request_photo, request_bestdeal_list
 from keyboards import keyboards, keyboards_text, calendar
 from telebot.types import CallbackQuery, InputMediaPhoto, Message
 from .start_help import start_command, check_state_inline_keyboard
@@ -255,7 +255,7 @@ def load_result(call: CallbackQuery) -> None:
     user.edit('date', datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S'))
     bot.send_message(call.from_user.id, constants.LOAD_RESULT)
     if user.user.command == constants.BESTDEAL[1:]:
-        response_hotels = request_bestdeal(call)
+        response_hotels = request_bestdeal_list(call)
     else:
         response_hotels = request_property_list(call)
     request_hotels(call, response_hotels)
@@ -266,7 +266,7 @@ def request_hotels(call: CallbackQuery, response_hotels: Response) -> None:
     """
     Функция - обрабатывающая ответ с API. Если статус код успешный, то создаётся запись в БД,
     о команде пользователя. Ответ с API десериализуется и проверяется в экземпляре пользователя введённая команда.
-    Если команда 'bestdeal результат поиска дополнительно обрабатывается в функции 'bestdeal_logic' файла 'bestdeal'.
+    Если команда 'bestdeal' результат поиска дополнительно обрабатывается в функции 'bestdeal_logic' файла 'bestdeal'.
     И затем осуществляется переход в функцию showing_hotels. Если статус код ответа не успешный,
     то пользователю выдаётся сообщение об ошибке поиска.
 
@@ -326,7 +326,6 @@ def showing_hotels(call: CallbackQuery, result_hotels: Any) -> None:
                 call=call, currency=user.user.currency, days=user.user.day_period, hotel=hotel
             )
             if hotel_show is not None:
-                print('Был здесь!')
                 index += 1
                 user_hotel = Hotel(call.from_user.id, hotel_show)
                 if user.user.count_photo != 0:
@@ -361,7 +360,7 @@ def hotel_template(call: CallbackQuery, currency: str, days: int, hotel: Dict) -
             price_per_period = price * days
         else:
             price = hotel['price']['lead']['formatted'][:-4]
-            price_ru = re.sub(r'[,]', '', price)
+            price_ru = re.sub(r'[, ]', '', price)
             price_per_period = int(price_ru) * days
             cur_sym = 'RUB'
         name = hotel['name']
@@ -408,14 +407,13 @@ def showing_hotels_with_photo(call: CallbackQuery, hotel: Dict, hotel_show: str,
     :return: None
     """
     logger.info(str(call.from_user.id))
-    response_photo = request_get_photo(call)
+    response_photo = request_photo(call, hotel['id'])
     if check_status_code(response_photo):
-        result_photo = json.loads(response_photo.text)
+        result_photo = json.loads(response_photo.text)['data']['propertyInfo']['propertyGallery']['images']
         media_massive, photo_str = photo_append(call, result_photo, hotel_show)
         bot.send_media_group(call.from_user.id, media=media_massive)
         user_hotel.photo = photo_str
         DataBaseModel.insert_hotel(user_hotel)
-
 
 
 @exception_handler
@@ -437,8 +435,8 @@ def photo_append(call: CallbackQuery, result_photo: List, hotel_show: str) -> Tu
         if index == user.user.count_photo:
             return media_massive, photo_str
         else:
-            photo_str += photo_dict['baseUrl'].format(size='y') + ' '
-            photo = photo_dict['baseUrl'].format(size='y')
+            photo_str += photo_dict['image']['url'].format(size='y') + ' '
+            photo = photo_dict['image']['url'].format(size='y')
             response = requests.get(photo)
             if check_status_code(response):
                 index += 1

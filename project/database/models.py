@@ -8,7 +8,7 @@ from telebot.types import Message, CallbackQuery, User
 @dataclass
 class User:
     """
-    Dataclass -  для хранения пользовательской информации
+    Dataclass - для хранения пользовательской информации
     """
     date: str = ''
     user_id: int = 0
@@ -58,6 +58,7 @@ class UserHandle:
     def set_default(self) -> None:
         """
         Метод класса UserHandle (сеттер), для присваивания атрибутам дефолтного значения
+
         :return: None
         """
         self.user.date = ''
@@ -121,7 +122,7 @@ class DataBaseModel:
     """
 
     @classmethod
-    def _init_user_tables(cls) -> None:
+    def init_user_tables(cls) -> None:
         """
         Класс-метод создающий базу данных и таблицу пользователя, в случае её отсутствия
 
